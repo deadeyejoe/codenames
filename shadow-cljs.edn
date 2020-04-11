@@ -1,0 +1,17 @@
+;; shadow-cljs configuration
+{:source-paths
+ ["src/dev"
+  "src/main"
+  "src/test"]
+
+ :dependencies
+ [[reagent "0.10.0"]
+  [org.clojure/test.check "1.0.0"]
+  [org.clojure/math.numeric-tower "0.0.4"]]
+ :dev-http {8080 "public"}
+ :builds
+ {:frontend
+  {:target :browser
+   :output-dir "public/assets/app/js"
+   :asset-path "/assets/app/js"
+   :modules {:main {:init-fn codenames.app/init}}}}}
