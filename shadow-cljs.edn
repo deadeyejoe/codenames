@@ -8,10 +8,11 @@
  [[reagent "0.10.0"]
   [org.clojure/test.check "1.0.0"]
   [org.clojure/math.numeric-tower "0.0.4"]]
- :dev-http {8080 "public"}
+ :dev-http {8080 "build"}
  :builds
  {:frontend
   {:target :browser
-   :output-dir "public/assets/app/js"
+   :dev {:output-dir "build/assets/app/js"}
+   :release {:output-dir "release/assets/app/js"}
    :asset-path "/assets/app/js"
    :modules {:main {:init-fn codenames.app/init}}}}}
