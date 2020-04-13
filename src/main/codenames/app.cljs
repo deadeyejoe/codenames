@@ -15,8 +15,6 @@
                  :disabled (= @current-seed @seed)}]
         [:input {:type "button" :value "Random" :on-click #(state/random-seed)}]]])))
 
-(def teams [:none :red :blue :neutral :assassin])
-
 (def card-base
   {:box-sizing :border-box
    :flex "1 0 15%"
@@ -37,13 +35,14 @@
                     :cursor :pointer}))
 
 (defn card-display [index word team]
-  [:div {:style (merge {:flex "0 0 100%"
-                        :display :flex
-                        :align-items :center
-                        :justify-content :center
-                        :font-size "40px"
-                        :cursor :pointer}
-                       (team style/teams))} [:span  word]])
+  (let [team-styling (team style/teams)]
+    [:div {:style (merge {:flex "0 0 100%"
+                          :display :flex
+                          :align-items :center
+                          :justify-content :center
+                          :font-size "40px"
+                          :cursor :pointer}
+                         (:style/button team-styling))} word]))
 
 (def team-button-base {:cursor :pointer
                        :display :flex
@@ -53,41 +52,23 @@
                        :justify-content :center
                        :align-items :center})
 
-(def team-buttons {:none {:team/shorthand "X"
-                          :style/border {:border (str "1px solid " (:200 style/grey))}
-                          :style/button (:none style/teams)
-                          :style/badge {:border (str "1px solid " (:200 style/grey))
-                                        :border-radius "10px"}
-                          :style/text {:color (:900 style/grey)}}
-                   :red {:team/shorthand "R"
-                         :style/button (:red style/teams)
-                         :style/badge {:border (str "1px solid " (:200 style/grey))
-                                       :border-radius "10px"
-                                       :color (:dark style/red)}
-                         :style/text {:color (:dark style/red)}}
-                   :blue {:team/shorthand "B"
-                          :style/text {:color (:dark style/blue)}}
-                   :neutral {:team/shorthand "N"
-                             :style/text {:color (:dark style/beige)}}
-                   :assassin {:team/shorthand "A"
-                              :style/text {:color (:900 style/grey)}}})
-
-
 (defn team-button [team]
-  (let [button-content (team team-buttons)]
+  (let [team-styling (team style/teams)]
     [:div {:key team
-           :style (merge team-button-base (team style/teams) (:style/border button-content))
+           :style (merge team-button-base (:style/button team-styling))
            :on-click #(state/set-team team)}
-     (:team/shorthand button-content)]))
+     (:team/shorthand team-styling)]))
 
 (defn card-control [index word team]
   [:<>
    [:div {:style
-          {:display :flex
-           :align-items :center
-           :flex "0 0 50%"
-           :box-sizing :border-box
-           :justify-content :center}} [:div {:style (get-in team-buttons [team :style/badge])}] word]
+          (merge {:display :flex
+                  :align-items :center
+                  :flex "0 0 50%"
+                  :box-sizing :border-box
+                  :justify-content :center}
+                 (get-in style/teams [team :style/button]))}
+    word]
    [:div {:style {:display :flex
                   :flex-wrap :wrap
                   :align-content :center
@@ -95,6 +76,9 @@
                   :height "100%"}}
     (map team-button
          (map #(if (= team %) :none %) [:red :blue :neutral :assassin]))]])
+
+(comment
+  (get-in style/teams [:none :style/button]))
 
 (defn card [[index word-state]]
   (let [{word :words/word team :words/team} word-state
@@ -126,8 +110,9 @@
 (defn render-app []
   (rd/render
    [:div
-    {:style style/base-css}
+    {:style style/root-element-css}
     [seed-control state/seed-cursor]
+    [:hr {:style {:margin 0 :border (str "1px solid " (:500 style/grey)) :margin-top "2px"}}]
     [word-grid]]
    (js/document.getElementById "root")))
 

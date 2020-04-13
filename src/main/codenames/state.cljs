@@ -6,19 +6,9 @@
 
 (declare state)
 
-(comment (words/words))
-
 (defn new-seed [] (first (rand/sample words/words 1 (. js/Date now))))
 
-(comment
-  (new-seed))
-
 (defn select-words [seed] (rand/sample words/words 25 seed))
-
-(comment
-  (select-words 5)
-  (select-words "a")
-  (select-words "polic"))
 
 (defn generate-word-map [words]
   (into (sorted-map)
