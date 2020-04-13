@@ -1,11 +1,8 @@
 (ns codenames.app
   (:require [reagent.dom :as rd]
-            [reagent.core :as rc]
             [codenames.state :as state :refer [state]]
             [codenames.style :as style]
             [codenames.utils :as u]))
-
-(enable-console-print!)
 
 (defn seed-control [seed]
   (let [current-seed (u/shadow seed)]
@@ -18,7 +15,7 @@
                  :disabled (= @current-seed @seed)}]
         [:input {:type "button" :value "Random" :on-click #(state/random-seed)}]]])))
 
-(def teams [:none :red :blue :assassin :neutral])
+(def teams [:none :red :blue :neutral :assassin])
 
 (def card-base
   {:box-sizing :border-box
@@ -27,55 +24,89 @@
    :min-width "17%"
    :max-height "15%"
    :min-height "15%"
+   :height "100%"
    :border-radius "2px"
-   :border (str "1px solid " (:200 style/grey))})
+   :border (str "1px solid " (:200 style/grey))
+   :display :flex})
 
-(def card-css
+(def card-display-css
   (merge card-base {:display :flex
                     :align-items :center
                     :justify-content :center
-                    :font-size "40px"} style/elevation-low))
+                    :font-size "40px"
+                    :cursor :pointer}))
 
-(def team-button-base {:border-radius "20px"
-                       :border "1px solid #000"
-                       :padding "6px 10px"
-                       :cursor :pointer})
+(defn card-display [index word team]
+  [:div {:style (merge {:flex "0 0 100%"
+                        :display :flex
+                        :align-items :center
+                        :justify-content :center
+                        :font-size "40px"
+                        :cursor :pointer}
+                       (team style/teams))} [:span  word]])
 
-(def team-buttons {:none {:team/shorthand "X"}
-                   :red {:team/shorthand "R"}
-                   :blue {:team/shorthand "B"}
-                   :assassin {:team/shorthand "A"}
-                   :neutral {:team/shorthand "N"}})
+(def team-button-base {:cursor :pointer
+                       :display :flex
+                       :flex "0 0 50%"
+                       :min-height "50%"
+                       :box-sizing :border-box
+                       :justify-content :center
+                       :align-items :center})
+
+(def team-buttons {:none {:team/shorthand "X"
+                          :style/border {:border (str "1px solid " (:200 style/grey))}
+                          :style/button (:none style/teams)
+                          :style/badge {:border (str "1px solid " (:200 style/grey))
+                                        :border-radius "10px"}
+                          :style/text {:color (:900 style/grey)}}
+                   :red {:team/shorthand "R"
+                         :style/button (:red style/teams)
+                         :style/badge {:border (str "1px solid " (:200 style/grey))
+                                       :border-radius "10px"
+                                       :color (:dark style/red)}
+                         :style/text {:color (:dark style/red)}}
+                   :blue {:team/shorthand "B"
+                          :style/text {:color (:dark style/blue)}}
+                   :neutral {:team/shorthand "N"
+                             :style/text {:color (:dark style/beige)}}
+                   :assassin {:team/shorthand "A"
+                              :style/text {:color (:900 style/grey)}}})
 
 
 (defn team-button [team]
-  [:div {:style (merge team-button-base (team style/teams))
-         :on-click #(state/set-team team)}
-   (get-in team-buttons [team :team/shorthand])])
+  (let [button-content (team team-buttons)]
+    [:div {:key team
+           :style (merge team-button-base (team style/teams) (:style/border button-content))
+           :on-click #(state/set-team team)}
+     (:team/shorthand button-content)]))
+
+(defn card-control [index word team]
+  [:<>
+   [:div {:style
+          {:display :flex
+           :align-items :center
+           :flex "0 0 50%"
+           :box-sizing :border-box
+           :justify-content :center}} [:div {:style (get-in team-buttons [team :style/badge])}] word]
+   [:div {:style {:display :flex
+                  :flex-wrap :wrap
+                  :align-content :center
+                  :flex "0 0 50%"
+                  :height "100%"}}
+    (map team-button
+         (map #(if (= team %) :none %) [:red :blue :neutral :assassin]))]])
 
 (defn card [[index word-state]]
-  (let [{word :words/word team :words/team} word-state]
-    (if (= index @state/controlled-word-cursor)
-      [:div {:key index
-             :style card-base}
-       [:div {:style {:padding-left "10px"
-                      :padding-top  "5px"}} word]
-       [:hr {:style {:border :none :height "1px" :background-color (:500 style/grey) :width "95%" :margin-top "5px"}}]
-       [:div {:style {:display :flex :justify-content :space-around :align-content :center}}
-        (map team-button teams)]]
-
-      [:div
-       {:key index
-        :class ["word-card" team]
-        :style (merge card-css (team style/teams))
-        :on-click #(reset! state/controlled-word-cursor index)}
-       [:div {:class "card-content"} [:span  word]]])))
-
-
-
-
-(comment (:words/map @state)
-         (card (first (:words/map @state))))
+  (let [{word :words/word team :words/team} word-state
+        controlled (= index @state/controlled-word-cursor)]
+    [:div {:key index
+           :style (merge card-base
+                         (if controlled style/elevation-high style/elevation-low))
+           :on-click #(reset! state/controlled-word-cursor index)
+           :on-mouse-leave #(reset! state/controlled-word-cursor nil)}
+     (if controlled
+       [card-control index word team]
+       [card-display index word team])]))
 
 (def word-grid-css
   {:display :flex
@@ -92,26 +123,13 @@
     :style word-grid-css}
    (doall (map card (:words/map @state)))])
 
-(defn word-control []
-  (when-let [controlled-index @state/controlled-word-cursor]
-    (let [word-cursor (state/word-cursor controlled-index)]
-      [:div "controlling:" controlled-index
-       (map (fn [team]
-              [:input {:key team
-                       :type "button"
-                       :value team
-                       :on-click #((swap! word-cursor assoc :words/team team) (reset! state/controlled-word-cursor nil))}])
-            teams)])))
-
-
 (defn render-app []
   (rd/render
    [:div
     {:style style/base-css}
     [seed-control state/seed-cursor]
-    ;; [word-control]
     [word-grid]]
-   (.-body js/document)))
+   (js/document.getElementById "root")))
 
 
 (defn init []

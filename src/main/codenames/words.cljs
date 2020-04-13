@@ -42,7 +42,7 @@
    "Missile"
    "Paste"
    "Drop"
-   "Pheonix"
+   "Phoenix"
    "Marble"
    "Staff"
    "Figure"

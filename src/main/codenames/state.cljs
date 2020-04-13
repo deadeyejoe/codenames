@@ -20,7 +20,6 @@
   (select-words "a")
   (select-words "polic"))
 
-
 (defn generate-word-map [words]
   (into (sorted-map)
         (map-indexed
@@ -49,4 +48,3 @@
 (defn set-team [team]
   (swap! state assoc-in [:words/map @controlled-word-cursor :words/team] team)
   (reset! controlled-word-cursor nil))
-
