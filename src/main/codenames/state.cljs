@@ -21,7 +21,9 @@
 
 (defn new-state
   ([] (new-state (new-seed)))
-  ([seed] {:words/seed seed :words/map (generate-word-map (select-words seed)) ::controlled-word false}))
+  ([seed] {:words/seed seed
+           :words/map (generate-word-map (select-words seed))
+           ::controlled-word false}))
 
 (defonce state (rc/atom (new-state)))
 
@@ -29,12 +31,12 @@
 (def controlled-word-cursor (rc/cursor state [::controlled-word]))
 (defn word-cursor [index] (rc/cursor state [:words/map index]))
 
-(defn random-seed []
+(defn random-word-seed []
   (reset! state (new-state)))
 
-(defn set-seed [seed]
+(defn set-word-seed [seed]
   (reset! state (new-state seed)))
 
-(defn set-team [team]
+(defn set-controlled-team [team]
   (swap! state assoc-in [:words/map @controlled-word-cursor :words/team] team)
   (reset! controlled-word-cursor nil))

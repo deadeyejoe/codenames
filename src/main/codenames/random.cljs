@@ -14,21 +14,21 @@
         out (if limit (mod stepped limit) stepped)]
     (lazy-seq (cons out (random-lazy-seq stepped limit)))))
 
-(defn generator [seed limit] (random-lazy-seq seed limit))
+(defn generator
+  "Returns a random number generator with the given seed. When optional parameter limit is specified, the return value n will satisfy 0 <= n < limit"
+  ([seed] (random-lazy-seq seed nil))
+  ([seed limit] (random-lazy-seq seed limit)))
 
 (comment
   (step 5)
   (step (step 5))
   (take 2 (generator 5 nil))
-  (take 2 (generator 5 5)))
+  (take 5 (generator 5 5)))
 
 (defn coerce-seed [seed]
   (if (string? seed)
     (hash (str/lower-case seed))
     seed))
-
-(comment
-  (hash "abc"))
 
 (defn sample [collection amount seed]
   (loop [gen (generator (coerce-seed seed) (dec (count collection)))
@@ -51,6 +51,4 @@
      (sample l 2 "a")
      (sample l 5 "a")
      (sample l 5 1455541201)])
-  (sample (range 10) 2 6)
-  (range 10)
-  10)
+  (sample (range 10) 2 6))

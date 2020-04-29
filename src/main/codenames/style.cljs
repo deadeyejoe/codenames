@@ -52,5 +52,3 @@
   {:font-family "arial"
    :background-color (:100 grey)
    :color (:900 grey)})
-
-
