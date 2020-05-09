@@ -4,7 +4,7 @@
    [codenames.style :as style]
    [codenames.style.responsive :as responsive]))
 
-(defn card-display [index word team]
+(defn card-display [index word team guessed]
   @responsive/font-size
   (let [team-styling (team style/teams)]
     [:div {:style (merge {:flex "0 0 100%"
@@ -13,7 +13,8 @@
                           :justify-content :center
                           :font-size @responsive/font-size
                           :cursor :pointer}
-                         (:style/button team-styling))} word]))
+                         (:style/button team-styling))}
+     (when-not (and guessed (= @state/mode-cursor :spymaster)) word)]))
 
 (def team-button-base {:cursor :pointer
                        :display :flex
@@ -23,11 +24,11 @@
                        :justify-content :center
                        :align-items :center})
 
-(defn team-button [team]
+(defn team-button [team index]
   (let [team-styling (team style/teams)]
     [:div {:key team
            :style (merge team-button-base (:style/button team-styling))
-           :on-click #(state/set-controlled-team team)}
+           :on-click #(state/set-team index team)}
      (:team/shorthand team-styling)]))
 
 (defn card-control [index word team]
@@ -45,7 +46,7 @@
                   :align-content :center
                   :flex "0 0 50%"
                   :height "100%"}}
-    (map team-button
+    (map #(team-button % index)
          (map #(if (= team %) :none %) [:red :blue :neutral :assassin]))]])
 
 (def card-base
@@ -61,13 +62,13 @@
    :display :flex})
 
 (defn card [[index word-state]]
-  (let [{word :words/word team :words/team} word-state
+  (let [{word :words/word team :words/team guessed :words/guessed} word-state
         controlled (= index @state/controlled-word-cursor)]
     [:div {:key index
            :style (merge card-base
                          (if controlled style/elevation-high style/elevation-low))
-           :on-click #(reset! state/controlled-word-cursor index)
+           :on-click #(state/word-clicked index)
            :on-mouse-leave #(reset! state/controlled-word-cursor nil)}
      (if controlled
        [card-control index word team]
-       [card-display index word team])]))
+       [card-display index word team guessed])]))

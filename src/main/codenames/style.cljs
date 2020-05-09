@@ -1,5 +1,9 @@
 (ns codenames.style)
 
+(def default-layer 0)
+(def overlay-layer 1)
+(def modal-layer 2)
+
 (def grey
   {:100 "hsl(0, 0%, 98%)"
    :200 "hsl(0, 0%, 90%)"
