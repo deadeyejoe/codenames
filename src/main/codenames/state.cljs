@@ -52,15 +52,16 @@
                   :key/first-team nil
                   :words/map new-word-map})))
 
-(defn spymaster-mode [state]
-  (let [key-seed (new-seed)
-        first-team (if (rand/coin-toss key-seed) :red :blue)
-        team-vector (generate-teams key-seed first-team)
-        new-word-map (set-teams (:words/map state) team-vector)]
-    (merge state {::mode :spymaster
-                  :key/seed key-seed
-                  :key/first-team first-team
-                  :words/map new-word-map})))
+(defn spymaster-mode
+  ([state] (spymaster-mode state (new-seed)))
+  ([state key-seed]
+   (let [first-team (if (rand/coin-toss key-seed) :red :blue)
+         team-vector (generate-teams key-seed first-team)
+         new-word-map (set-teams (:words/map state) team-vector)]
+     (merge state {::mode :spymaster
+                   :key/seed key-seed
+                   :key/first-team first-team
+                   :words/map new-word-map}))))
 
 (def mode-cursor (rc/cursor state [::mode]))
 (def modal-active-cursor (rc/cursor state [::modal-active]))
@@ -69,8 +70,6 @@
 (def map-cursor (rc/cursor state [:words/map]))
 (def controlled-word-cursor (rc/cursor state [::controlled-word]))
 (defn word-cursor [index] (rc/cursor state [:words/map index]))
-
-(comment @state)
 
 (defn calculate-team-score
   ([[team]] (->> (:words/map @state)
@@ -90,8 +89,12 @@
                    identity
                    spymaster-mode) (new-state))))
 
-(defn set-word-seed [seed]
-  (reset! state (new-state seed)))
+(defn set-seed [word-seed key-seed]
+  (reset! state (if (= :guesser @mode-cursor)
+                  (new-state word-seed)
+                  (spymaster-mode (new-state word-seed) key-seed))))
+
+@modal-active-cursor
 
 (defn set-team [index team]
   (swap! (word-cursor index) merge {:words/team team :words/guessed true})

@@ -22,7 +22,7 @@
      [:div
       [:input {:type "button"
                :value "Set"
-               :on-click #(swap! state/modal-active-cursor not)}]
+               :on-click #(state/set-seed @word-atom @key-atom)}]
       [:input {:type "button"
                :value "Cancel"
                :on-click #(swap! state/modal-active-cursor not)}]]]))
