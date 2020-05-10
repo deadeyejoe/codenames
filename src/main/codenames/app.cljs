@@ -2,7 +2,7 @@
   (:require [reagent.dom :as rd]
             [reagent.core :as rc]
             [codenames.components.card :refer [card]]
-            [codenames.components.status-bar :refer [status-bar]]
+            [codenames.components.status-bar :refer [status-bar mode-control]]
             [codenames.state :as state :refer [state]]
             [codenames.style :as style]
             [codenames.style.responsive :as responsive]
@@ -11,21 +11,23 @@
 (defn modal-content []
   (let [word-atom (rc/atom @state/word-seed-cursor)
         key-atom (rc/atom @state/key-seed-cursor)]
-    [:<>
+    [:div
      [:div
-      [:span "Words"]
-      [u/atom-input word-atom]]
-     (when (= @state/mode-cursor :spymaster)
-       [:div
-        [:span "Key"]
-        [u/atom-input key-atom]])
-     [:div
-      [:input {:type "button"
-               :value "Set"
-               :on-click #(state/set-seed @word-atom @key-atom)}]
-      [:input {:type "button"
-               :value "Cancel"
-               :on-click #(swap! state/modal-active-cursor not)}]]]))
+      [:div
+       [:span "Words"]
+       [u/atom-input word-atom]]
+      (when (= @state/mode-cursor :spymaster)
+        [:div
+         [:span "Key"]
+         [u/atom-input key-atom]])
+      [:div
+       [:input {:type "button"
+                :value "Set"
+                :on-click #(state/set-seed @word-atom @key-atom)}]]]
+     [:div [mode-control]]
+     [:input {:type "button"
+              :value "Cancel"
+              :on-click #(swap! state/modal-active-cursor not)}]]))
 
 (defn modal-container []
   (when @state/modal-active-cursor
