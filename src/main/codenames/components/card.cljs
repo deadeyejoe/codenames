@@ -2,19 +2,23 @@
   (:require
    [codenames.state :as state]
    [codenames.style :as style]
-   [codenames.style.responsive :as responsive]))
+   [codenames.style.responsive :as responsive]
+   [reagent.core :as rc]))
 
 (defn card-display [index word team guessed]
   @responsive/font-size
-  (let [team-styling (team style/teams)]
-    [:div {:style (merge {:flex "0 0 100%"
-                          :display :flex
-                          :align-items :center
-                          :justify-content :center
-                          :font-size @responsive/font-size
-                          :cursor :pointer}
-                         (:style/button team-styling))}
-     (when-not (and guessed (= @state/mode-cursor :spymaster)) word)]))
+  (let [hovered (rc/atom false)]
+    (fn [index word team guessed]
+      [:div {:style (merge {:flex "0 0 100%"
+                            :display :flex
+                            :align-items :center
+                            :justify-content :center
+                            :font-size @responsive/font-size
+                            :cursor :pointer}
+                           (:style/button (team style/teams)))
+             :on-mouse-enter #(swap! hovered not)
+             :on-mouse-leave #(swap! hovered not)}
+       (when (or (not guessed) @hovered) word)])))
 
 (def team-button-base {:cursor :pointer
                        :display :flex
@@ -32,22 +36,14 @@
      (:team/shorthand team-styling)]))
 
 (defn card-control [index word team]
-  [:<>
-   [:div {:style
-          (merge {:display :flex
-                  :align-items :center
-                  :flex "0 0 50%"
-                  :box-sizing :border-box
-                  :justify-content :center}
-                 (get-in style/teams [team :style/button]))}
-    word]
-   [:div {:style {:display :flex
-                  :flex-wrap :wrap
-                  :align-content :center
-                  :flex "0 0 50%"
-                  :height "100%"}}
+  [:div {:style {:display :flex
+                 :flex-wrap :wrap
+                 :align-content :center
+                 :flex "0 0 100%"
+                 :height "100%"}}
+   (doall
     (map #(team-button % index)
-         (map #(if (= team %) :none %) [:red :blue :neutral :assassin]))]])
+         (map #(if (= team %) :none %) [:red :blue :neutral :assassin])))])
 
 (def card-base
   {:box-sizing :border-box

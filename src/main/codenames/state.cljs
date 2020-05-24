@@ -67,6 +67,7 @@
 (def modal-active-cursor (rc/cursor state [::modal-active]))
 (def word-seed-cursor (rc/cursor state [:words/seed]))
 (def key-seed-cursor (rc/cursor state [:key/seed]))
+(def first-team-cursor (rc/cursor state [:key/first-team]))
 (def map-cursor (rc/cursor state [:words/map]))
 (def controlled-word-cursor (rc/cursor state [::controlled-word]))
 (defn word-cursor [index] (rc/cursor state [:words/map index]))
@@ -79,7 +80,12 @@
                  (count)))
   ([_p _v] nil))
 
+(defn calculate-team-limit
+  ([[team]] (if (= team (:key/first-team @state)) 9 8))
+  ([_p _v] nil))
+
 (defn score-cursor [team] (rc/cursor calculate-team-score [team]))
+(defn limit-cursor [team] (rc/cursor calculate-team-limit [team]))
 
 (defn toggle-mode []
   (swap! state (if (= @mode-cursor :guesser) spymaster-mode guesser-mode)))
@@ -94,10 +100,9 @@
                   (new-state word-seed)
                   (spymaster-mode (new-state word-seed) key-seed))))
 
-@modal-active-cursor
-
 (defn set-team [index team]
-  (swap! (word-cursor index) merge {:words/team team :words/guessed true})
+  (swap! (word-cursor index) merge {:words/team team
+                                    :words/guessed (not= team :none)})
   (reset! controlled-word-cursor nil))
 
 (defn mark-guessed [index]
