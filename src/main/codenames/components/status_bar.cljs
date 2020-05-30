@@ -1,70 +1,69 @@
 (ns codenames.components.status-bar
   (:require [codenames.state :as state]
             [codenames.style :as style]
-            [codenames.style.responsive :as responsive]
-            [clojure.string :as string]))
+            [codenames.components.mode-control :refer [mode-control]]
+            [codenames.components.button :refer [button]]
+            [clojure.string :as string]
+            [re-com.core :refer [h-box box gap]]))
 
-(def space-between {:display :flex
-                    :justify-content :space-between})
-
-(defn seed-control []
-  [:div {:style {:display :flex
-                 :flex "row nowrap"
-                 :justify-content :space-between
-                 :width "390px"}}
-   [:div {:style {:display :flex
-                  :flex "row nowrap"
-                  :width "250px"
-                  :justify-content :space-between
-                  :align-items :center}}
-    [:div [:strong "Word:"] (:words/seed @state/state)]
-    (when (= :spymaster @state/mode-cursor)
-      [:div [:strong "Key:"] (:key/seed @state/state)])]
-   [:div
-    [:input {:type "button"
-             :value "Random"
-             :on-click state/random-seed}]
-    [:input {:type "button"
-             :value "Set"
-             :on-click #(swap! state/modal-active-cursor not)}]]])
-
-(defn score-card []
-  (let [guesser? (= @state/mode-cursor :guesser)
-        score-style {:padding "5px 10px"
-                     :border-radius "2px"
-                     :cursor (when guesser? "pointer")}]
-    [:div {:style {:display :flex
-                   :flex "row nowrap"
-                   :width "190px"
-                   :height "100%"
-                   :justify-content :space-between
-                   :align-items :center}}
-     [:div {:style (merge score-style (get-in style/teams [:red :style/button]))
-            :on-click #(when guesser? (reset! state/first-team-cursor :red))
-            :title (when guesser? "Click to set red as first team")}
-      "Red: " @(state/score-cursor :red) " / " @(state/limit-cursor :red)]
-     [:div {:style (merge score-style (get-in style/teams [:blue :style/button]))
-            :on-click #(when guesser? (reset! state/first-team-cursor :blue))
-            :title (when guesser? "Click to set blue as first team")}
-      "Blue: " @(state/score-cursor :blue) " / " @(state/limit-cursor :blue)]]))
-
-(def mode-antonym {:guesser "Spymaster"
-                   :spymaster "Guesser"})
-
-(defn mode-control []
-  (let [current-mode @state/mode-cursor]
-    [:div {:style {:display :flex
-                   :flex "row-reverse nowrap"
-                   :justify-content :space-between
-                   :align-items :center
-                   :width :260px}}
-     [:div "Mode: " (string/capitalize (name current-mode))]
-     [:input {:type "button"
-              :value (str (mode-antonym current-mode) " mode")
-              :on-click state/toggle-mode}]]))
+(declare status-bar seed-control score-card)
 
 (defn status-bar []
-  [:div {:style space-between}
-   [seed-control]
-   [score-card]
-   [mode-control]])
+  [h-box
+   :size "0 0 4vh"
+   :style style/elevation-low
+   :children [[gap :size "1vw"]
+              [seed-control]
+              [score-card]
+
+              ;; [box :size "1" :justify :end :child [mode-control]]
+              [h-box :size "1" :justify :end :children [[mode-control]]]
+              [gap :size "1vw"]]])
+
+(defn seed-control []
+  [h-box
+   :size "1"
+   :justify :start
+   :align :center
+   :gap "5px"
+   :children [[box
+               :size "1"
+               :min-width "120px"
+               :style {:white-space "nowrap"}
+               :child [:div [:strong "Word: "] (:words/seed @state/state)]]
+              [box
+               :size "1"
+               :min-width "120px"
+               :style {:white-space "nowrap"}
+               :child (or (and (= :spymaster @state/mode-cursor) [:div [:strong "Key: "] (:key/seed @state/state)]) "")]
+              [h-box
+               :size "2"
+               :gap "4px"
+               :children [[button "Random" state/random-seed]
+                          [button "Set" #(swap! state/modal-active-cursor not)]]]]])
+
+(defn team-score [team]
+  (let [guesser? (= @state/mode-cursor :guesser)
+        is-first? (= @state/first-team-cursor team)
+        team-name (string/capitalize (name team))]
+    [box
+     :size "0"
+     :style (merge {:padding "5px 10px"
+                    :border-radius "2px"
+                    :white-space "nowrap"}
+                   (get-in style/teams [team :style/button])
+                   (when guesser? {:cursor "pointer"}))
+     :attr {:on-click #(when guesser? (reset! state/first-team-cursor team))
+            :title (cond
+                     is-first? (str team-name " is first team")
+                     guesser? (str "Click to set " team-name " as first team"))}
+     :child (str team-name ": " @(state/score-cursor team) " / " @(state/limit-cursor team))]))
+
+(defn score-card []
+  [h-box
+   :size "1"
+   :justify :center
+   :align :center
+   :gap "5px"
+   :children [[team-score :red] [team-score :blue]]])
+

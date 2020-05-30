@@ -6,6 +6,7 @@
 
  :dependencies
  [[reagent "0.10.0"]
+  [re-com "2.8.0"]
   [org.clojure/test.check "1.0.0"]
   [org.clojure/math.numeric-tower "0.0.4"]]
  :dev-http {8080 "build"}

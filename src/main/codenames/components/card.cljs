@@ -3,68 +3,60 @@
    [codenames.state :as state]
    [codenames.style :as style]
    [codenames.style.responsive :as responsive]
-   [reagent.core :as rc]))
+   [reagent.core :as rc]
+   [re-com.core :refer [h-box, v-box box]]))
 
-(defn card-display [index word team guessed]
+(declare card-display card-control team-button)
+
+(defn card [index word-state]
   @responsive/font-size
-  (let [hovered (rc/atom false)]
-    (fn [index word team guessed]
-      [:div {:style (merge {:flex "0 0 100%"
-                            :display :flex
-                            :align-items :center
-                            :justify-content :center
-                            :font-size @responsive/font-size
-                            :cursor :pointer}
-                           (:style/button (team style/teams)))
-             :on-mouse-enter #(swap! hovered not)
-             :on-mouse-leave #(swap! hovered not)}
-       (when (or (not guessed) @hovered) word)])))
+  (let [{team :words/team} word-state
+        controlled? (= index @state/controlled-word-cursor)]
+    [box
+     :size "20%"
+     :style (merge {:font-size @responsive/font-size
+                    :cursor :pointer
+                    :border-radius "3px"
+                    :border (str "1px solid " (:200 style/grey))}
+                   style/elevation-high
+                   (get-in style/teams [team :style/button]))
+     :attr {:on-click #(state/word-clicked index)
+            :on-mouse-leave #(reset! state/controlled-word-cursor nil)}
+     :child (if controlled?
+              [card-control index word-state]
+              [card-display word-state])]))
 
-(def team-button-base {:cursor :pointer
-                       :display :flex
-                       :flex "0 0 50%"
-                       :min-height "50%"
-                       :box-sizing :border-box
-                       :justify-content :center
-                       :align-items :center})
+(defn card-display [word-state]
+  (let [hovered? (rc/atom false)
+        toggle-hover #(swap! hovered? not)]
+    (fn [word-state]
+      (let [{word :words/word guessed? :words/guessed} word-state]
+        [box
+         :size "1"
+         :width "100%"
+         :justify :center
+         :align :center
+         :attr {:on-mouse-enter toggle-hover
+                :on-mouse-leave toggle-hover}
+         :child (if (or (not guessed?) @hovered?) word "")]))))
 
-(defn team-button [team index]
-  (let [team-styling (team style/teams)]
-    [:div {:key team
-           :style (merge team-button-base (:style/button team-styling))
-           :on-click #(state/set-team index team)}
-     (:team/shorthand team-styling)]))
+(defn card-control [index word-state]
+  (let [{team :words/team} word-state]
+    [v-box
+     :size "1"
+     :width "100%"
+     :children (->> (replace {team :none} [:red :blue :neutral :assassin])
+                    (map (fn [t] [team-button index t]))
+                    (partition 2)
+                    (map (fn [ts] [h-box :size "50%" :height "50%" :children ts])))]))
 
-(defn card-control [index word team]
-  [:div {:style {:display :flex
-                 :flex-wrap :wrap
-                 :align-content :center
-                 :flex "0 0 100%"
-                 :height "100%"}}
-   (doall
-    (map #(team-button % index)
-         (map #(if (= team %) :none %) [:red :blue :neutral :assassin])))])
-
-(def card-base
-  {:box-sizing :border-box
-   :flex "1 0 15%"
-   :max-width "17%"
-   :min-width "17%"
-   :max-height "15%"
-   :min-height "15%"
-   :height "100%"
-   :border-radius "2px"
-   :border (str "1px solid " (:200 style/grey))
-   :display :flex})
-
-(defn card [[index word-state]]
-  (let [{word :words/word team :words/team guessed :words/guessed} word-state
-        controlled (= index @state/controlled-word-cursor)]
-    [:div {:key index
-           :style (merge card-base
-                         (if controlled style/elevation-high style/elevation-low))
-           :on-click #(state/word-clicked index)
-           :on-mouse-leave #(reset! state/controlled-word-cursor nil)}
-     (if controlled
-       [card-control index word team]
-       [card-display index word team guessed])]))
+(defn team-button [index team]
+  (let [{team-button :style/button shorthand :team/shorthand} (team style/teams)]
+    [box
+     :size "1"
+     :height "100%"
+     :justify :center
+     :align :center
+     :style (merge {:cursor :pointer} team-button)
+     :attr {:on-click #(state/set-team index team)}
+     :child shorthand]))

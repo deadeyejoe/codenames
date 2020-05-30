@@ -9,10 +9,18 @@
 (def breakpoints
   [{:breakpoint/width 700
     :breakpoint/font-size "12px"}
-   {:breakpoint/width 1200
+   {:breakpoint/width 900
+    :breakpoint/font-size "12px"}
+   {:breakpoint/width 1000
+    :breakpoint/font-size "15px"}
+   {:breakpoint/width 1300
+    :breakpoint/font-size "20px"}
+   {:breakpoint/width 1400
     :breakpoint/font-size "25px"}
    {:breakpoint/width  1600
     :breakpoint/font-size "30px"}
+   {:breakpoint/width  1920
+    :breakpoint/font-size "35px"}
    {:breakpoint/name :default
     :breakpoint/font-size "40px"}])
 

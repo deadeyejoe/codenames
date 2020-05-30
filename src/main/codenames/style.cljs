@@ -49,6 +49,7 @@
                                       :background-color "hsl(0, 0%, 10%)"}
                        :style/text {:color (:900 grey)}}})
 
+(def elevation-button {:box-shadow "1px 1px 2px hsla(0, 0%, 0%, .2)"})
 (def elevation-low {:box-shadow "0 4px 6px hsla(0, 0%, 0%, .2)"})
 (def elevation-high {:box-shadow "0 15px 35px hsla(0, 0%, 0%, .2)"})
 
